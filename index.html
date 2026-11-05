@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pokémon Tournament Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700..800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a tournament desk. Holo-foil title card with live season stats, a sticky tab rail,
+   and "pairing slips" (table, trainer, tie, trainer) as the main working surface. */
+:root{
+  --paper:#EDF0F7; --card:#FFFFFF; --ink:#141A33; --ink-2:#4F5877; --line:#D4D9E7; --line-2:#E5E8F1;
+  --accent:#2F44E0; --accent-ink:#FFFFFF; --accent-soft:#E3E7FD; --accent-line:#BCC5F7;
+  --win:#1B7A52; --win-soft:#DBF1E5; --win-ink:#FFFFFF;
+  --tie:#96600F; --tie-soft:#FAEDD3; --tie-ink:#FFFFFF;
+  --danger:#B3202D; --danger-soft:#FBE2E4;
+  --gold:#D9A520; --silver:#A3ACBD; --bronze:#C07A43; --medal-ink:#17110A;
+  --holo-1:#C7ECFF; --holo-2:#E4D7FF; --holo-3:#FFD9EC; --holo-4:#FFF0C4; --holo-5:#CBF5E3;
+  --holo-ink:#141A33; --holo-edge:#C9D0E5; --holo-rule:rgba(20,26,51,.16); --foil-line:rgba(255,255,255,.38);
+  --sheen:rgba(255,255,255,.75); --chip-on-holo:rgba(255,255,255,.62);
+  --shadow:0 1px 0 rgba(20,26,51,.04), 0 12px 28px -18px rgba(20,26,51,.38);
+  --backdrop:rgba(12,16,34,.45);
+
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --font-data:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:18px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1324; --card:#171C33; --ink:#E9ECF8; --ink-2:#A2AAC7; --line:#2B3253; --line-2:#222944;
+    --accent:#8796FF; --accent-ink:#0F1324; --accent-soft:#232B57; --accent-line:#3B4692;
+    --win:#52C893; --win-soft:#143528; --win-ink:#06150E;
+    --tie:#E5B058; --tie-soft:#3A2D14; --tie-ink:#1A1204;
+    --danger:#F27C86; --danger-soft:#3D1D23;
+    --gold:#E7BC45; --silver:#B3BBCC; --bronze:#D58F5B; --medal-ink:#14100A;
+    --holo-1:#1C3658; --holo-2:#33285B; --holo-3:#4A2545; --holo-4:#483D1E; --holo-5:#163F37;
+    --holo-ink:#F3F5FF; --holo-edge:#2F3762; --holo-rule:rgba(255,255,255,.18); --foil-line:rgba(255,255,255,.05);
+    --sheen:rgba(255,255,255,.16); --chip-on-holo:rgba(255,255,255,.12);
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 14px 30px -18px rgba(0,0,0,.85);
+    --backdrop:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1324; --card:#171C33; --ink:#E9ECF8; --ink-2:#A2AAC7; --line:#2B3253; --line-2:#222944;
+  --accent:#8796FF; --accent-ink:#0F1324; --accent-soft:#232B57; --accent-line:#3B4692;
+  --win:#52C893; --win-soft:#143528; --win-ink:#06150E;
+  --tie:#E5B058; --tie-soft:#3A2D14; --tie-ink:#1A1204;
+  --danger:#F27C86; --danger-soft:#3D1D23;
+  --gold:#E7BC45; --silver:#B3BBCC; --bronze:#D58F5B; --medal-ink:#14100A;
+  --holo-1:#1C3658; --holo-2:#33285B; --holo-3:#4A2545; --holo-4:#483D1E; --holo-5:#163F37;
+  --holo-ink:#F3F5FF; --holo-edge:#2F3762; --holo-rule:rgba(255,255,255,.18); --foil-line:rgba(255,255,255,.05);
+  --sheen:rgba(255,255,255,.16); --chip-on-holo:rgba(255,255,255,.12);
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 14px 30px -18px rgba(0,0,0,.85);
+  --backdrop:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:15px; line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+[hidden]{display:none!important}
+img{max-width:100%}
+h1,h2,h3,h4{text-wrap:balance}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;margin:-1px}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+
+.wrap{
+  max-width:1120px; margin-inline:auto;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+
+/* ---------- Title card (holo foil) ---------- */
+.top{padding-block:20px 14px;display:grid;gap:12px}
+.title-card{
+  position:relative; overflow:hidden; isolation:isolate;
+  border-radius:var(--r-lg); padding:18px 22px 16px; color:var(--holo-ink);
+  background:
+    repeating-linear-gradient(125deg, transparent 0 7px, var(--foil-line) 7px 8px),
+    linear-gradient(118deg, var(--holo-1) 0%, var(--holo-2) 28%, var(--holo-3) 52%, var(--holo-4) 76%, var(--holo-5) 100%);
+  border:1px solid var(--holo-edge); box-shadow:var(--shadow);
+  display:grid; gap:12px;
+}
+.title-card::after{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:-1;
+  background:linear-gradient(105deg, transparent 38%, var(--sheen) 50%, transparent 62%);
+  background-size:250% 100%; background-position:-30% 0;
+  animation:sheen 2.4s cubic-bezier(.2,.7,.2,1) .35s 1 both;
+}
+.title-card:hover::after{animation:sheen-again 1.5s cubic-bezier(.2,.7,.2,1) 1 both}
+@keyframes sheen{from{background-position:130% 0}to{background-position:-30% 0}}
+@keyframes sheen-again{from{background-position:130% 0}to{background-position:-30% 0}}
+.tc-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.eyebrow{font-family:var(--font-data);font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+.season{font-family:var(--font-data);font-weight:700;font-size:13px;padding:4px 11px;border-radius:999px;background:var(--chip-on-holo);white-space:nowrap}
+.tc-name{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,5.4vw,52px);line-height:1;letter-spacing:-.025em;margin:2px 0 0;overflow-wrap:anywhere}
+.tc-stats{display:flex;flex-wrap:wrap;gap:10px 0;margin:0;border-top:1px solid var(--holo-rule);padding-top:12px}
+.tc-stats > div{padding-right:18px;margin-right:18px;border-right:1px solid var(--holo-rule);min-width:0}
+.tc-stats > div:last-child{border-right:0;margin-right:0;padding-right:0}
+.tc-stats dt{font-size:11px;text-transform:uppercase;letter-spacing:.09em;opacity:.78;font-weight:700}
+.tc-stats dd{margin:0;font-family:var(--font-data);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+.notice{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;
+  padding:12px 14px;border-radius:var(--r-md);background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--ink)
+}
+.notice p{margin:0;min-width:0;flex:1 1 280px}
+
+/* ---------- Tabs ---------- */
+.tabs-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  appearance:none;border:0;background:none;font:inherit;font-weight:700;color:var(--ink-2);
+  padding:14px 12px 11px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;
+  display:inline-flex;gap:8px;align-items:center
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .count{font-family:var(--font-data);font-size:11.5px;font-weight:700;background:var(--line-2);border-radius:999px;padding:1px 7px;color:var(--ink-2)}
+.tab[aria-selected="true"] .count{background:var(--accent-soft);color:var(--accent)}
+
+.main{padding-block:22px 56px}
+.panel-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px;margin-bottom:16px}
+.panel-head h2{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1}
+.panel-head p{margin:4px 0 0;color:var(--ink-2)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* ---------- Controls ---------- */
+.btn{
+  appearance:none;font:inherit;font-weight:700;font-size:14px;line-height:1.2;color:var(--ink);
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-height:40px;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap
+}
+.btn:hover{border-color:var(--ink-2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn-primary:hover{filter:brightness(1.07);border-color:var(--accent)}
+.btn-quiet{background:transparent;border-color:transparent;color:var(--accent)}
+.btn-quiet:hover{background:var(--accent-soft);border-color:transparent}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:var(--danger-soft);border-color:var(--danger)}
+.btn.is-confirm{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-sm{min-height:32px;padding:6px 10px;font-size:13px}
+.input{
+  font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:8px 12px;min-height:40px;width:100%;min-width:0
+}
+.input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.input{resize:vertical;line-height:1.45}
+.field{display:grid;gap:6px;min-width:0;margin:0;padding:0;border:0}
+.field > label,.field > legend{font-size:13px;font-weight:700;color:var(--ink-2);padding:0}
+.field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.form-msg{margin:0;font-size:13.5px;min-height:1.2em;color:var(--ink-2)}
+.form-msg.is-error{color:var(--danger)}
+.form-msg.is-ok{color:var(--win)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;display:grid;gap:14px;align-content:start;min-width:0}
+.card h3{font-family:var(--font-display);font-size:19px;font-weight:800;margin:0;letter-spacing:-.01em}
+.card h4{margin:0;font-size:14px}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.empty{padding:28px 20px;border:1px dashed var(--line);border-radius:var(--r-lg);text-align:center;display:grid;gap:10px;justify-items:center;color:var(--ink-2)}
+.empty b{color:var(--ink);font-size:17px}
+
+/* ---------- Fixtures ---------- */
+.weeks-rail{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px 18px}
+.wchip{
+  flex:none;display:grid;gap:2px;text-align:left;padding:8px 13px 9px;border-radius:var(--r-md);
+  border:1px solid var(--line);background:var(--card);cursor:pointer;font:inherit;color:var(--ink);min-width:100px
+}
+.wchip b{font-family:var(--font-display);font-size:15px;font-weight:800}
+.wchip small{font-family:var(--font-data);font-size:11.5px;color:var(--ink-2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
+.dot.done{background:var(--win)} .dot.part{background:var(--tie)}
+.wchip[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.wchip.add{border-style:dashed;color:var(--accent);align-content:center}
+.wchip.add b{font-size:14px}
+
+.week-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.week-title{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.week-title h3{font-family:var(--font-display);font-size:24px;font-weight:800;margin:0;letter-spacing:-.01em}
+.date-input{width:auto;min-height:34px;padding:4px 10px;font-size:14px}
+.progress{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-data);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.meter{width:110px;height:8px;border-radius:99px;background:var(--line-2);overflow:hidden;display:inline-block}
+.meter i{display:block;height:100%;background:var(--win);border-radius:99px}
+.hint{margin:0 0 12px;color:var(--ink-2);font-size:14px}
+
+.slips{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.slip{
+  display:grid;grid-template-columns:62px minmax(0,1fr) 74px minmax(0,1fr);grid-template-areas:"no a tie b";
+  gap:8px;align-items:stretch;padding:8px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--line)
+}
+.tno{grid-area:no;display:grid;align-content:center;justify-items:center;font-family:var(--font-data);font-weight:700;font-size:21px;line-height:1;font-variant-numeric:tabular-nums}
+.tno small{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.pl{
+  grid-area:a;appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 12px;min-height:58px;min-width:0;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name tag" "meta tag";align-items:center;column-gap:10px
+}
+.pl-b{grid-area:b;text-align:right;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"tag name" "tag meta"}
+.pl:hover{border-color:var(--ink-2)}
+.pl-name{grid-area:name;font-weight:700;overflow-wrap:anywhere;line-height:1.25}
+.pl-meta{grid-area:meta;font-size:12.5px;color:var(--ink-2)}
+.tag{grid-area:tag;font-family:var(--font-data);font-size:11px;font-weight:700;letter-spacing:.07em;padding:4px 8px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+.tag:empty{display:none}
+.tag.t-win{background:var(--win);color:var(--win-ink)}
+.tag.t-loss{background:var(--line-2);color:var(--ink-2)}
+.tag.t-tie{background:var(--tie);color:var(--tie-ink)}
+.tie-btn{
+  grid-area:tie;appearance:none;font:inherit;font-weight:700;font-size:13px;color:var(--ink-2);cursor:pointer;
+  border:1px dashed var(--line);background:transparent;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px
+}
+.tie-btn .vs{font-family:var(--font-data);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.tie-btn:hover{border-color:var(--ink-2);color:var(--ink)}
+.slip[data-state="a"] .pl-a,.slip[data-state="b"] .pl-b{background:var(--win-soft);border-color:var(--win)}
+.slip[data-state="a"] .pl-b,.slip[data-state="b"] .pl-a{opacity:.7}
+.slip[data-state="tie"] .pl{background:var(--tie-soft);border-color:var(--tie)}
+.slip[data-state="tie"] .tie-btn{background:var(--tie-soft);border:1px solid var(--tie);color:var(--tie)}
+.slip.bye{grid-template-columns:62px minmax(0,1fr);grid-template-areas:"no a";background:transparent;border-style:dashed}
+.bye-line{grid-area:a;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 4px}
+.tag.t-bye{background:var(--accent-soft);color:var(--accent)}
+.slip.editing{grid-template-columns:62px minmax(0,1fr) 30px minmax(0,1fr) 40px;grid-template-areas:"no a vs b x";align-items:center}
+.slip.editing .sel-a{grid-area:a}.slip.editing .sel-b{grid-area:b}
+.slip.editing .vs-txt{grid-area:vs;text-align:center;font-family:var(--font-data);font-size:12px;color:var(--ink-2)}
+.slip.editing .x{grid-area:x}
+.icon-btn{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink-2);border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:18px;line-height:1}
+.icon-btn:hover{background:var(--danger-soft);color:var(--danger)}
+.warn{margin:12px 0 0;padding:10px 12px;border-radius:var(--r-md);background:var(--tie-soft);color:var(--ink);border:1px solid var(--tie);font-size:14px}
+.info{margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+
+.bonus{margin-top:16px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card)}
+.bonus summary{cursor:pointer;padding:12px 14px;font-weight:700;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.bonus summary .muted{font-weight:400;font-size:13.5px}
+.bonus-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:6px 16px;padding:0 14px 6px}
+.brow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--line-2);min-width:0}
+.brow span{overflow-wrap:anywhere;min-width:0}
+.stepper{display:inline-flex;align-items:center;gap:2px;flex:none}
+.stepper button{appearance:none;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.stepper button:hover{border-color:var(--ink-2)}
+.stepper output{min-width:34px;text-align:center;font-family:var(--font-data);font-weight:700}
+.bonus .small{padding:4px 14px 14px;margin:0}
+
+.new-week{gap:18px}
+.nw-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.inline-field{display:flex;align-items:center;gap:8px}
+.inline-field label{font-size:13px;font-weight:700;color:var(--ink-2)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seg-btn{appearance:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-md);padding:10px 12px;display:grid;gap:2px}
+.seg-btn b{font-size:15px}
+.seg-btn span{font-size:13px;color:var(--ink-2)}
+.seg-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.present-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.present{display:flex;flex-wrap:wrap;gap:8px}
+.pchip{appearance:none;font:inherit;color:var(--ink);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px 6px 8px;display:inline-flex;gap:8px;align-items:center;cursor:pointer;max-width:100%}
+.pchip small{color:var(--ink-2);font-family:var(--font-data);font-size:11.5px}
+.pchip .box{width:18px;height:18px;border-radius:5px;border:2px solid var(--ink-2);display:grid;place-items:center;flex:none}
+.pchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.pchip[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.pchip[aria-pressed="true"] .box::after{content:"";width:5px;height:9px;border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.pchip[aria-pressed="false"]{color:var(--ink-2)}
+.nw-go{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+
+/* ---------- Trainers ---------- */
+.trainers-layout{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+.add-card{position:sticky;top:calc(env(safe-area-inset-top,0px) + 66px)}
+.bulk summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.bulk[open]{display:grid;gap:10px}
+.bulk[open] summary{margin-bottom:2px}
+.roster{display:grid;gap:6px;min-width:0}
+.rhead,.rrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,.7fr) minmax(0,1.3fr) 118px 84px 76px;grid-template-areas:"name cls deck stats status del";gap:6px;align-items:center}
+.rhead{padding:0 10px 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:700}
+.rhead span:nth-child(n+4){text-align:center}
+.rrow{padding:6px 8px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md)}
+.rrow.is-dropped{background:transparent;border-style:dashed}
+.rrow.is-dropped .inline{color:var(--ink-2)}
+.c-name{grid-area:name}.c-cls{grid-area:cls}.c-deck{grid-area:deck}.c-stats{grid-area:stats}.c-status{grid-area:status}.c-del{grid-area:del}
+.inline{width:100%;min-width:0;border:1px solid transparent;background:transparent;border-radius:8px;padding:7px 8px;font:inherit;color:inherit}
+.inline:hover{border-color:var(--line)}
+.inline:focus{border-color:var(--accent);background:var(--paper);outline:none}
+.inline.name{font-weight:700}
+.rstats{font-family:var(--font-data);font-size:12.5px;color:var(--ink-2);white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
+.status-btn{appearance:none;font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 10px;cursor:pointer;border:1px solid var(--win);background:var(--win-soft);color:var(--win);white-space:nowrap}
+.status-btn[aria-pressed="false"]{border-color:var(--line);background:transparent;color:var(--ink-2)}
+.roster-note{margin:8px 2px 0;font-size:13px;color:var(--ink-2)}
+
+/* ---------- Standings ---------- */
+.table-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:680px}
+.st th{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:700;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.st td{padding:9px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap;vertical-align:middle}
+.st tbody tr:last-child td{border-bottom:0}
+.st .num{text-align:right;font-family:var(--font-data)}
+.st th.num{font-family:var(--font-body)}
+.st .wkcol{text-align:center;padding-inline:3px}
+.st th.wkgroup{text-align:center;border-left:1px solid var(--line-2)}
+.st td.wkfirst,.st th.wkfirst{border-left:1px solid var(--line-2);padding-left:10px}
+.st tr.is-dropped td{color:var(--ink-2)}
+.rank{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font-family:var(--font-data);font-weight:700;font-size:13px;border:1px solid var(--line)}
+.rank.r1{background:var(--gold);color:var(--medal-ink);border-color:transparent}
+.rank.r2{background:var(--silver);color:var(--medal-ink);border-color:transparent}
+.rank.r3{background:var(--bronze);color:var(--medal-ink);border-color:transparent}
+.move{font-family:var(--font-data);font-size:12px;font-weight:700;width:34px}
+.move.up{color:var(--win)} .move.down{color:var(--danger)} .move.same{color:var(--ink-2)}
+.trainer-link{appearance:none;border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;text-align:left}
+.trainer-link:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.sub{display:block;font-size:12px;color:var(--ink-2);font-weight:400}
+.pts{font-family:var(--font-display);font-weight:800;font-size:21px;line-height:1}
+.wk{display:inline-grid;place-items:center;min-width:32px;height:28px;border-radius:7px;font-family:var(--font-data);font-size:12.5px;font-weight:700;padding:0 5px;position:relative}
+.wk sup{font-size:9.5px;margin-left:1px;top:-.45em}
+.wk-win{background:var(--win-soft);color:var(--win)}
+.wk-tie{background:var(--tie-soft);color:var(--tie)}
+.wk-loss{background:var(--line-2);color:var(--ink-2)}
+.wk-bye{background:var(--accent-soft);color:var(--accent)}
+.wk-pending{border:1px dashed var(--line);color:var(--ink-2)}
+.wk-absent{color:var(--ink-2);opacity:.6}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:12px 2px 0;font-size:13px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key .wk{min-width:24px;height:20px;font-size:11px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+#panel-standings:fullscreen{background:var(--paper);padding:32px 40px;overflow:auto}
+#panel-standings:fullscreen .st{font-size:19px}
+#panel-standings:fullscreen .pts{font-size:28px}
+#panel-standings:fullscreen .panel-head h2{font-size:44px}
+
+/* ---------- Setup ---------- */
+.setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;align-items:start}
+.points-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.points-grid .input{font-family:var(--font-data);font-weight:700;text-align:center}
+.rules{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px}
+.card hr{border:0;border-top:1px solid var(--line-2);margin:2px 0;width:100%}
+.card p{margin:0}
+
+/* ---------- Dialog, toast, footer ---------- */
+dialog.tcard{border:1px solid var(--line);padding:0;border-radius:var(--r-lg);background:var(--card);color:var(--ink);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 48px);box-shadow:var(--shadow);overflow:auto}
+dialog.tcard::backdrop{background:var(--backdrop)}
+.tc-foil{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 12px 18px;color:var(--holo-ink);
+  background:repeating-linear-gradient(125deg,transparent 0 7px,var(--foil-line) 7px 8px),linear-gradient(118deg,var(--holo-1),var(--holo-2) 30%,var(--holo-3) 55%,var(--holo-4) 78%,var(--holo-5))}
+.tc-foil .icon-btn{color:var(--holo-ink)}
+.tc-foil .icon-btn:hover{background:var(--chip-on-holo);color:var(--holo-ink)}
+.tc-body{padding:18px;display:grid;gap:14px}
+.tc-body h2{font-family:var(--font-display);font-size:28px;font-weight:800;margin:0;line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere}
+.tc-figs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.tc-figs div{background:var(--paper);border-radius:var(--r-md);padding:8px 10px}
+.tc-figs dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:700}
+.tc-figs dd{margin:0;font-family:var(--font-data);font-weight:700;font-size:17px}
+.tc-body h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2)}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.hist li{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line-2)}
+.hist .h-wk{font-family:var(--font-data);font-weight:700;color:var(--ink-2);font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;transition:opacity .2s,transform .2s;
+  max-width:calc(100vw - 32px);z-index:20;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{padding-block:0 32px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;font-size:13px;color:var(--ink-2)}
+.save-state{display:inline-flex;align-items:center;gap:8px}
+.save-state .dot{background:var(--win)}
+.save-state.is-off .dot{background:var(--danger)}
+
+#print-sheet{display:none}
+
+@media (max-width:860px){
+  .trainers-layout{grid-template-columns:minmax(0,1fr)}
+  .add-card{position:static}
+  .rhead{display:none}
+  .rrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;grid-template-areas:"name name del" "cls deck deck" "stats stats status";row-gap:2px}
+  .rstats{text-align:left;padding-left:8px}
+}
+@media (max-width:640px){
+  .slip{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"no tie" "a b"}
+  .tno{display:flex;justify-content:flex-start;align-items:baseline;gap:6px;padding-left:4px;font-size:16px}
+  .tno small{margin:0}
+  .tie-btn{justify-self:end;flex-direction:row;gap:8px;min-height:34px;padding:4px 14px}
+  .slip.bye{grid-template-columns:minmax(0,1fr);grid-template-areas:"no" "a"}
+  .slip.editing{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no x" "a a" "b b"}
+  .slip.editing .vs-txt{display:none}
+  .seg{grid-template-columns:minmax(0,1fr)}
+  .points-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-figs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .field-row{grid-template-columns:minmax(0,1fr)}
+  .panel-head h2{font-size:26px}
+}
+@media (prefers-reduced-motion: reduce){
+  .title-card::after{animation:none;opacity:0}
+  .toast{transition:none}
+}
+@media print{
+  body{background:#fff;color:#000;padding:0}
+  body > *:not(#print-sheet){display:none!important}
+  body::before{display:none}
+  #print-sheet{display:block;font-family:var(--font-body);color:#000}
+  #print-sheet h1{font-family:var(--font-display);font-size:24pt;margin:0 0 2pt}
+  #print-sheet h2{font-size:14pt;margin:0 0 14pt;font-weight:700}
+  #print-sheet table{width:100%;border-collapse:collapse;font-size:13pt}
+  #print-sheet th,#print-sheet td{border:1px solid #999;padding:8pt 8pt;text-align:left}
+  #print-sheet th{background:#eee;font-size:10pt;text-transform:uppercase;letter-spacing:.06em}
+  #print-sheet td.t{font-family:var(--font-data);font-weight:700;text-align:center;width:52pt}
+  #print-sheet td.vs{text-align:center;width:28pt;color:#555}
+  #print-sheet td.box{width:120pt}
+  #print-sheet td.r{text-align:right;font-family:var(--font-data)}
+  #print-sheet p{font-size:10.5pt;color:#333;margin-top:12pt}
+}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <header class="wrap top">
+    <div class="title-card" id="title-card"></div>
+    <div class="notice" id="example-banner" hidden></div>
+  </header>
+
+  <nav class="tabs-bar" aria-label="Sections">
+    <div class="wrap tabs" role="tablist" id="tabs">
+      <button type="button" class="tab" role="tab" id="tab-trainers" data-action="tab" data-tab="trainers" aria-controls="panel-trainers">Trainers <span class="count" id="count-trainers">0</span></button>
+      <button type="button" class="tab" role="tab" id="tab-fixtures" data-action="tab" data-tab="fixtures" aria-controls="panel-fixtures">Fixtures <span class="count" id="count-fixtures">0</span></button>
+      <button type="button" class="tab" role="tab" id="tab-standings" data-action="tab" data-tab="standings" aria-controls="panel-standings">Standings</button>
+      <button type="button" class="tab" role="tab" id="tab-setup" data-action="tab" data-tab="setup" aria-controls="panel-setup">Setup</button>
+    </div>
+  </nav>
+
+  <main class="wrap main">
+    <section id="panel-trainers" role="tabpanel" aria-labelledby="tab-trainers" hidden>
+      <div class="panel-head">
+        <div><h2>Trainers</h2><p id="trainers-sub">Add everyone taking part.</p></div>
+      </div>
+      <div class="trainers-layout">
+        <form class="card add-card" id="add-form" novalidate>
+          <h3>Add a trainer</h3>
+          <div class="field">
+            <label for="add-name">Name</label>
+            <input id="add-name" class="input" autocomplete="off" maxlength="40" placeholder="e.g. Aisha Khan">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="add-cls">Class</label>
+              <input id="add-cls" class="input" autocomplete="off" maxlength="12" placeholder="e.g. 7A">
+            </div>
+            <div class="field">
+              <label for="add-deck">Deck or team</label>
+              <input id="add-deck" class="input" autocomplete="off" maxlength="30" placeholder="Optional">
+            </div>
+          </div>
+          <p class="form-msg" id="add-msg" role="status"></p>
+          <button type="submit" class="btn btn-primary">Add trainer</button>
+          <details class="bulk" id="bulk">
+            <summary>Paste a whole list</summary>
+            <textarea id="bulk-text" class="input" rows="6" placeholder="Aisha Khan, 7A&#10;Omar Haddad, 7B, Fire&#10;Priya Nair"></textarea>
+            <p class="small muted">One trainer per line. Put a class after a comma, and a deck after a second comma. You can paste straight from a spreadsheet column.</p>
+            <button type="button" class="btn" data-action="bulk-add">Add everyone</button>
+          </details>
+        </form>
+        <div>
+          <div class="roster" id="roster"></div>
+          <p class="roster-note">Trainers who have played can't be deleted. Set them to Dropped to leave them out of new pairings and keep their results.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden></section>
+    <section id="panel-standings" role="tabpanel" aria-labelledby="tab-standings" hidden></section>
+    <section id="panel-setup" role="tabpanel" aria-labelledby="tab-setup" hidden></section>
+  </main>
+
+  <footer class="wrap foot">
+    <span class="save-state" id="save-state"><span class="dot"></span><span id="save-text">Saves automatically in this browser</span></span>
+    <span>Scoring (3 for a win, 1 for a tie) and Swiss pairings follow the format used at official Pokémon events.</span>
+  </footer>
+</div>
+
+<dialog class="tcard" id="trainer-dialog" aria-label="Trainer card"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="print-sheet"></div>
+<noscript><p style="padding:16px">This page needs JavaScript switched on to run the tournament.</p></noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'pokemon-tournament-desk:v1';
+  var UI_KEY = 'pokemon-tournament-desk:ui';
+  var TABS = ['trainers', 'fixtures', 'standings', 'setup'];
+
+  /* ---------------- helpers ---------------- */
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function uid() { return Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function todayISO() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function fmtDate(iso, long) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T12:00:00');
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-GB', long ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'short' });
+  }
+  function avg(arr) { return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : 0; }
+  function pk(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+  function byName(a, b) { return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(arr, rng) {
+    for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+    return arr;
+  }
+
+  /* ---------------- state ---------------- */
+  function defaultSettings() {
+    return { name: 'Pokémon League', game: 'Pokémon TCG', format: 'Best of 3', pairing: 'swiss', weeksPlanned: 6,
+             points: { win: 3, tie: 1, loss: 0, bye: 3 } };
+  }
+  function emptyState(keepSettings) {
+    return { v: 1, example: false, settings: keepSettings || defaultSettings(), trainers: [], weeks: [] };
+  }
+  function normalize(s) {
+    var base = emptyState();
+    if (!s || typeof s !== 'object') return base;
+    var st = {
+      v: 1,
+      example: !!s.example,
+      settings: Object.assign(defaultSettings(), s.settings || {}),
+      trainers: Array.isArray(s.trainers) ? s.trainers : [],
+      weeks: Array.isArray(s.weeks) ? s.weeks : []
+    };
+    st.settings.points = Object.assign(defaultSettings().points, (s.settings && s.settings.points) || {});
+    if (st.settings.name === 'Lunchtime Pokémon League') st.settings.name = 'Pokémon League';
+    st.trainers = st.trainers.filter(function (t) { return t && t.id && t.name; }).map(function (t) {
+      return { id: String(t.id), name: String(t.name).slice(0, 40), cls: String(t.cls || '').slice(0, 12), deck: String(t.deck || '').slice(0, 30), active: t.active !== false };
+    });
+    var ids = new Set(st.trainers.map(function (t) { return t.id; }));
+    st.weeks = st.weeks.filter(function (w) { return w && Array.isArray(w.matches); }).map(function (w) {
+      var bonus = {};
+      Object.keys(w.bonus || {}).forEach(function (k) { var n = Number(w.bonus[k]) || 0; if (ids.has(k) && n) bonus[k] = n; });
+      return {
+        id: String(w.id || uid()), date: w.date || '',
+        matches: w.matches.filter(function (m) { return m && ids.has(m.a) && (!m.b || ids.has(m.b)); }).map(function (m) {
+          var b = m.b || null;
+          var r = b ? (['a', 'b', 'tie'].indexOf(m.result) >= 0 ? m.result : null) : 'bye';
+          return { id: String(m.id || uid()), table: m.table || null, a: m.a, b: b, result: r };
+        }),
+        bonus: bonus
+      };
+    });
+    st.weeks.forEach(renumber);
+    return st;
+  }
+
+  var storageOK = true;
+  var lastSaved = null;
+  function loadStored() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) return normalize(JSON.parse(raw));
+    } catch (e) { storageOK = false; }
+    return null;
+  }
+  function commit() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); storageOK = true; lastSaved = new Date(); }
+    catch (e) { storageOK = false; }
+    renderSaveState();
+  }
+  function loadUI() { try { return JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify({ tab: ui.tab, hideDropped: ui.hideDropped, bonusOpen: ui.bonusOpen })); } catch (e) { /* not available */ } }
+
+  /* ---------------- tournament logic ---------------- */
+  function renumber(wk) {
+    wk.matches.sort(function (x, y) { return (x.b ? 0 : 1) - (y.b ? 0 : 1); });
+    var n = 1;
+    wk.matches.forEach(function (m) { m.table = m.b ? n++ : null; });
+  }
+  function weekStatus(wk) {
+    var real = wk.matches.filter(function (m) { return m.b; });
+    var done = real.filter(function (m) { return m.result; }).length;
+    return { done: done, total: real.length, state: real.length === 0 ? 'done' : done === real.length ? 'done' : done > 0 ? 'part' : 'new' };
+  }
+
+  function computeStandings(st, opts) {
+    opts = opts || {};
+    var P = st.settings.points;
+    var byId = new Map();
+    st.trainers.forEach(function (t) {
+      byId.set(t.id, { id: t.id, t: t, w: 0, l: 0, d: 0, byes: 0, played: 0, mp: 0, bonus: 0, total: 0, opps: [], weekly: {}, wp: 0, owp: 0, oowp: 0 });
+    });
+    st.weeks.forEach(function (wk, wi) {
+      if (opts.excludeWeekId && wk.id === opts.excludeWeekId) return;
+      if (opts.upto != null && wi > opts.upto) return;
+      function cell(r) { return r.weekly[wk.id] || (r.weekly[wk.id] = { kind: 'pending', pts: 0, bonus: 0 }); }
+      wk.matches.forEach(function (m) {
+        var A = byId.get(m.a), B = m.b ? byId.get(m.b) : null;
+        if (!A) return;
+        if (!m.b) { A.byes++; A.mp += P.bye; var c = cell(A); c.kind = 'bye'; c.pts += P.bye; return; }
+        if (!B) return;
+        if (!m.result) { cell(A); cell(B); return; }
+        A.played++; B.played++; A.opps.push(B.id); B.opps.push(A.id);
+        if (m.result === 'tie') {
+          A.d++; B.d++; A.mp += P.tie; B.mp += P.tie;
+          var ca = cell(A), cb = cell(B); ca.kind = 'tie'; cb.kind = 'tie'; ca.pts += P.tie; cb.pts += P.tie;
+        } else {
+          var W = m.result === 'a' ? A : B, L = m.result === 'a' ? B : A;
+          W.w++; L.l++; W.mp += P.win; L.mp += P.loss;
+          var cw = cell(W), cl = cell(L); cw.kind = 'win'; cl.kind = 'loss'; cw.pts += P.win; cl.pts += P.loss;
+        }
+      });
+      Object.keys(wk.bonus || {}).forEach(function (id) {
+        var r = byId.get(id), n = Number(wk.bonus[id]) || 0;
+        if (r && n) { r.bonus += n; cell(r).bonus += n; }
+      });
+    });
+    var rows = Array.from(byId.values());
+    rows.forEach(function (r) {
+      r.total = r.mp + r.bonus;
+      r.wp = r.played ? Math.max(0.25, (r.w * 3 + r.d) / (r.played * 3)) : 0.25;
+    });
+    rows.forEach(function (r) {
+      var o = r.opps.map(function (id) { return byId.get(id); }).filter(Boolean);
+      r.owp = o.length ? avg(o.map(function (x) { return x.wp; })) : 0;
+    });
+    rows.forEach(function (r) {
+      var o = r.opps.map(function (id) { return byId.get(id); }).filter(Boolean);
+      r.oowp = o.length ? avg(o.map(function (x) { return x.owp; })) : 0;
+    });
+    rows.sort(function (a, b) {
+      return (b.total - a.total) || (b.owp - a.owp) || (b.oowp - a.oowp) || ((b.w + b.byes) - (a.w + a.byes)) || byName(a.t, b.t);
+    });
+    return { rows: rows, byId: byId };
+  }
+
+  /* Swiss: sort by points (random within a points group), give the bye to the lowest-ranked
+     trainer without one, then pair from the top avoiding rematches (with backtracking). */
+  function makePairings(st, presentIds, method, rng, excludeWeekId) {
+    rng = rng || Math.random;
+    var stand = computeStandings(st, { excludeWeekId: excludeWeekId });
+    var played = new Set(), hadBye = new Set();
+    st.weeks.forEach(function (wk) {
+      if (excludeWeekId && wk.id === excludeWeekId) return;
+      wk.matches.forEach(function (m) { if (m.b) played.add(pk(m.a, m.b)); else hadBye.add(m.a); });
+    });
+    var order = shuffle(presentIds.slice(), rng);
+    function pts(id) { var r = stand.byId.get(id); return r ? r.total : 0; }
+    if (method === 'swiss') order.sort(function (x, y) { return pts(y) - pts(x); });
+    var bye = null;
+    if (order.length % 2 === 1) {
+      for (var i = order.length - 1; i >= 0; i--) { if (!hadBye.has(order[i])) { bye = order[i]; break; } }
+      if (bye == null) bye = order[order.length - 1];
+      order = order.filter(function (id) { return id !== bye; });
+    }
+    var steps = 0;
+    function solve(list) {
+      if (!list.length) return [];
+      if (++steps > 200000) return null;
+      var p = list[0];
+      for (var k = 1; k < list.length; k++) {
+        var q = list[k];
+        if (played.has(pk(p, q))) continue;
+        var sub = solve(list.slice(1, k).concat(list.slice(k + 1)));
+        if (sub) { sub.unshift([p, q]); return sub; }
+      }
+      return null;
+    }
+    var pairs = solve(order), rematch = false;
+    if (!pairs) {
+      rematch = true; pairs = [];
+      for (var j = 0; j < order.length; j += 2) pairs.push([order[j], order[j + 1]]);
+    }
+    var matches = pairs.map(function (pq, n) { return { id: uid(), table: n + 1, a: pq[0], b: pq[1], result: null }; });
+    if (bye) matches.push({ id: uid(), table: null, a: bye, b: null, result: 'bye' });
+    return { matches: matches, rematch: rematch, bye: bye };
+  }
+
+  function exampleState() {
+    var s = emptyState();
+    s.example = true;
+    var people = [
+      ['Aisha Khan', '7A', 'Psychic'], ['Omar Haddad', '7B', 'Fire'], ['Priya Nair', '8C', 'Water'],
+      ['Leo Martins', '7A', 'Lightning'], ['Fatima Al Mansoori', '8C', 'Grass'], ['Zayd Hussain', '9B', 'Darkness'],
+      ['Mia Thompson', '7B', 'Fighting'], ['Arjun Patel', '8A', 'Metal'], ['Sofia Rossi', '9B', 'Dragon'],
+      ['Yusuf Nasser', '7A', 'Water'], ['Hana Begum', '8A', 'Fire'], ['Ethan Clarke', '9A', 'Grass']
+    ];
+    s.trainers = people.map(function (p) { return { id: uid(), name: p[0], cls: p[1], deck: p[2], active: true }; });
+    var rng = mulberry32(20261105);
+    var dates = ['2026-10-15', '2026-10-22', '2026-10-29', '2026-11-05'];
+    var absent = [[], [8], [], [11]];
+    for (var wk = 0; wk < 4; wk++) {
+      var present = s.trainers.filter(function (t, i) { return absent[wk].indexOf(i) < 0; }).map(function (t) { return t.id; });
+      var res = makePairings(s, present, 'swiss', rng);
+      var week = { id: uid(), date: dates[wk], matches: res.matches, bonus: {} };
+      var real = week.matches.filter(function (m) { return m.b; });
+      real.forEach(function (m, i) {
+        if (wk < 3 || i < 2) { var r = rng(); m.result = r < 0.46 ? 'a' : r < 0.92 ? 'b' : 'tie'; }
+      });
+      s.weeks.push(week);
+    }
+    s.weeks[0].bonus[s.trainers[3].id] = 1;
+    s.weeks[2].bonus[s.trainers[10].id] = 1;
+    return s;
+  }
+
+  /* ---------------- app state ---------------- */
+  var stored = loadStored();
+  var state = stored || exampleState();
+  var savedUI = loadUI();
+  var ui = {
+    tab: null, week: null, editWeek: null, present: null, newMethod: null, newDate: null,
+    confirm: null, confirmTimer: null, hideDropped: !!savedUI.hideDropped, bonusOpen: !!savedUI.bonusOpen
+  };
+
+  function trainer(id) { for (var i = 0; i < state.trainers.length; i++) if (state.trainers[i].id === id) return state.trainers[i]; return null; }
+  function tName(id) { var t = trainer(id); return t ? t.name : 'Unknown trainer'; }
+  function findMatch(id) {
+    for (var i = 0; i < state.weeks.length; i++) {
+      var w = state.weeks[i];
+      for (var j = 0; j < w.matches.length; j++) if (w.matches[j].id === id) return { week: w, match: w.matches[j] };
+    }
+    return null;
+  }
+  function weekById(id) { return state.weeks.filter(function (w) { return w.id === id; })[0] || null; }
+  function activeTrainers() { return state.trainers.filter(function (t) { return t.active; }).sort(byName); }
+  function inAnyMatch() {
+    var s = new Set();
+    state.weeks.forEach(function (w) { w.matches.forEach(function (m) { s.add(m.a); if (m.b) s.add(m.b); }); });
+    return s;
+  }
+  function lastResultWeekIndex() {
+    var idx = -1;
+    state.weeks.forEach(function (w, i) { if (w.matches.some(function (m) { return m.b && m.result; })) idx = i; });
+    return idx;
+  }
+
+  function askConfirm(key) {
+    if (ui.confirm === key) { clearTimeout(ui.confirmTimer); ui.confirm = null; return true; }
+    ui.confirm = key;
+    clearTimeout(ui.confirmTimer);
+    ui.confirmTimer = setTimeout(function () { ui.confirm = null; render(); }, 5000);
+    render();
+    return false;
+  }
+
+  /* ---------------- rendering ---------------- */
+  function withFocus(fn) {
+    var a = document.activeElement;
+    var fk = a && a.getAttribute ? a.getAttribute('data-fk') : null;
+    fn();
+    if (fk) {
+      var el = document.querySelector('[data-fk="' + fk + '"]');
+      if (el && el !== document.activeElement) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
+    }
+  }
+  function render() {
+    withFocus(function () { renderHeader(); renderTabs(); renderPanel(ui.tab); });
+  }
+  function renderPanel(t) {
+    if (t === 'trainers') renderTrainers();
+    else if (t === 'fixtures') renderFixtures();
+    else if (t === 'standings') renderStandings();
+    else renderSetup();
+  }
+
+  function renderHeader() {
+    var s = state.settings, n = state.weeks.length, planned = Number(s.weeksPlanned) || 0;
+    var weekLabel = n === 0 ? 'Not started' : (planned && n <= planned ? 'Week ' + n + ' of ' + planned : 'Week ' + n);
+    var fmt = [s.game, s.pairing === 'swiss' ? 'Swiss pairings' : 'Random pairings', s.format].filter(Boolean).join(' · ');
+    var all = [], done = 0;
+    state.weeks.forEach(function (w) { w.matches.forEach(function (m) { if (m.b) { all.push(m); if (m.result) done++; } }); });
+    var stand = computeStandings(state);
+    var leader = done > 0 ? stand.rows[0] : null;
+    var active = state.trainers.filter(function (t) { return t.active; }).length;
+    $('#title-card').innerHTML =
+      '<div class="tc-row"><span class="eyebrow">' + esc(fmt) + '</span><span class="season">' + esc(weekLabel) + '</span></div>' +
+      '<h1 class="tc-name">' + esc(s.name || 'Pokémon League') + '</h1>' +
+      '<dl class="tc-stats">' +
+        '<div><dt>Trainers</dt><dd>' + active + '</dd></div>' +
+        '<div><dt>Results in</dt><dd>' + done + ' / ' + all.length + '</dd></div>' +
+        '<div><dt>Top of the table</dt><dd>' + (leader ? esc(leader.t.name) + ' · ' + leader.total + ' pts' : 'No results yet') + '</dd></div>' +
+      '</dl>';
+    var banner = $('#example-banner');
+    banner.hidden = !state.example;
+    if (state.example) {
+      var c = ui.confirm === 'start-own';
+      banner.innerHTML = '<p><b>This is an example league</b> with made-up trainers, so you can see how it works. Try entering a result in Week 4.</p>' +
+        '<div class="btn-row">' + (c ? '<button type="button" class="btn btn-quiet" data-action="cancel-confirm">Keep the example</button>' : '') +
+        '<button type="button" class="btn ' + (c ? 'is-confirm' : 'btn-primary') + '" data-action="start-own" data-fk="start-own">' +
+        (c ? 'Clear the example and start' : 'Start my own league') + '</button></div>';
+    }
+    document.title = (s.name ? s.name + ' · ' : '') + 'Pokémon Tournament Desk';
+  }
+
+  function renderTabs() {
+    TABS.forEach(function (t) {
+      var btn = $('#tab-' + t), panel = $('#panel-' + t), on = t === ui.tab;
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
+      panel.hidden = !on;
+    });
+    $('#count-trainers').textContent = state.trainers.filter(function (t) { return t.active; }).length;
+    $('#count-fixtures').textContent = state.weeks.length ? 'W' + state.weeks.length : '0';
+  }
+
+  function showTab(t) {
+    if (TABS.indexOf(t) < 0) return;
+    ui.tab = t;
+    saveUI();
+    if (location.hash.slice(1) !== t) {
+      try { history.replaceState(null, '', '#' + t); } catch (e) { try { location.hash = t; } catch (e2) { /* ignore */ } }
+    }
+    render();
+  }
+
+  /* ----- Trainers ----- */
+  function renderTrainers() {
+    var list = state.trainers.slice().sort(function (a, b) { return (b.active - a.active) || byName(a, b); });
+    var stand = computeStandings(state);
+    var used = inAnyMatch();
+    var active = list.filter(function (t) { return t.active; }).length;
+    $('#trainers-sub').textContent = list.length
+      ? plural(list.length, 'trainer') + ' · ' + active + ' active' + (list.length - active ? ' · ' + (list.length - active) + ' dropped' : '')
+      : 'Add everyone taking part.';
+    var roster = $('#roster');
+    if (!list.length) {
+      roster.innerHTML = '<div class="empty"><b>No trainers yet</b><span>Add your first trainer with the form, or paste a class list.</span></div>';
+      return;
+    }
+    var html = '<div class="rhead" aria-hidden="true"><span>Name</span><span>Class</span><span>Deck or team</span><span>Record</span><span>Status</span><span></span></div>';
+    list.forEach(function (t) {
+      var r = stand.byId.get(t.id);
+      var c = ui.confirm === 'del:' + t.id;
+      var locked = used.has(t.id);
+      html += '<div class="rrow' + (t.active ? '' : ' is-dropped') + '">' +
+        '<input class="inline name c-name" value="' + esc(t.name) + '" maxlength="40" aria-label="Name" data-change="t-name" data-id="' + t.id + '" data-fk="tn-' + t.id + '">' +
+        '<input class="inline c-cls" value="' + esc(t.cls) + '" maxlength="12" placeholder="Class" aria-label="Class for ' + esc(t.name) + '" data-change="t-cls" data-id="' + t.id + '" data-fk="tc-' + t.id + '">' +
+        '<input class="inline c-deck" value="' + esc(t.deck) + '" maxlength="30" placeholder="Deck or team" aria-label="Deck or team for ' + esc(t.name) + '" data-change="t-deck" data-id="' + t.id + '" data-fk="td-' + t.id + '">' +
+        '<span class="rstats c-stats">' + (r.w + r.byes) + '-' + r.l + '-' + r.d + ' · ' + r.total + ' pts</span>' +
+        '<button type="button" class="status-btn c-status" aria-pressed="' + t.active + '" title="' + (t.active ? 'In new pairings. Click to drop.' : 'Left out of new pairings. Click to bring back.') + '" data-action="t-status" data-id="' + t.id + '" data-fk="ts-' + t.id + '">' + (t.active ? 'Active' : 'Dropped') + '</button>' +
+        '<button type="button" class="btn btn-sm c-del ' + (c ? 'is-confirm' : 'btn-quiet') + '" data-action="t-del" data-id="' + t.id + '" data-fk="tx-' + t.id + '"' +
+          (locked ? ' disabled title="' + esc(t.name) + ' has been paired, so they can\'t be deleted. Set them to Dropped instead."' : '') + '>' + (c ? 'Confirm' : 'Delete') + '</button>' +
+        '</div>';
+    });
+    roster.innerHTML = html;
+  }
+
+  function addTrainer(name, cls, deck) {
+    name = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (!name) return { ok: false, msg: 'Type a name first.' };
+    var lower = name.toLowerCase();
+    if (state.trainers.some(function (t) { return t.name.toLowerCase() === lower; })) {
+      return { ok: false, dup: true, msg: 'There\'s already a trainer called ' + name + '. Add an initial to tell them apart.' };
+    }
+    state.trainers.push({ id: uid(), name: name, cls: String(cls || '').trim().slice(0, 12), deck: String(deck || '').trim().slice(0, 30), active: true });
+    ui.present = null;
+    return { ok: true, msg: 'Added ' + name + '.' };
+  }
+
+  /* ----- Fixtures ----- */
+  function renderFixtures() {
+    var el = $('#panel-fixtures');
+    var weeks = state.weeks;
+    if (ui.week !== 'new' && !weekById(ui.week)) ui.week = weeks.length ? weeks[weeks.length - 1].id : 'new';
+    var html = '<div class="panel-head"><div><h2>Fixtures</h2><p>' +
+      (weeks.length ? 'Pick a week to enter results, or make next week\'s pairings.' : 'Make the first week\'s pairings when everyone has arrived.') +
+      '</p></div></div>';
+    html += '<div class="weeks-rail" role="group" aria-label="Weeks">';
+    weeks.forEach(function (w, i) {
+      var s = weekStatus(w);
+      html += '<button type="button" class="wchip" aria-pressed="' + (ui.week === w.id) + '" data-action="pick-week" data-id="' + w.id + '" data-fk="wk-' + w.id + '">' +
+        '<b>Week ' + (i + 1) + '</b><small><span class="dot ' + s.state + '"></span>' +
+        (s.state === 'done' ? 'Done' : s.done + ' of ' + s.total) + (w.date ? ' · ' + esc(fmtDate(w.date)) : '') + '</small></button>';
+    });
+    html += '<button type="button" class="wchip add" aria-pressed="' + (ui.week === 'new') + '" data-action="pick-week" data-id="new" data-fk="wk-new"><b>+ New week</b><small>Week ' + (weeks.length + 1) + '</small></button>';
+    html += '</div>';
+    html += ui.week === 'new' ? newWeekHTML() : weekHTML(weekById(ui.week));
+    el.innerHTML = html;
+  }
+
+  function newWeekHTML() {
+    var n = state.weeks.length + 1;
+    var active = activeTrainers();
+    if (active.length < 2) {
+      return '<div class="empty"><b>Add at least two trainers first</b><span>Pairings are made from the trainers marked Active.</span>' +
+        '<button type="button" class="btn btn-primary" data-action="tab" data-tab="trainers">Go to Trainers</button></div>';
+    }
+    if (!ui.present) ui.present = new Set(active.map(function (t) { return t.id; }));
+    var present = active.filter(function (t) { return ui.present.has(t.id); });
+    var method = ui.newMethod || state.settings.pairing;
+    var date = ui.newDate || todayISO();
+    var prev = state.weeks[state.weeks.length - 1];
+    var ps = prev ? weekStatus(prev) : null;
+    var P = state.settings.points;
+    var html = '<div class="card new-week">' +
+      '<div class="nw-top"><h3>Week ' + n + '</h3>' +
+      '<div class="inline-field"><label for="nw-date">Date</label><input type="date" id="nw-date" class="input date-input" value="' + esc(date) + '" data-change="nw-date" data-fk="nw-date"></div></div>' +
+      '<fieldset class="field"><legend>How to pair</legend><div class="seg">' +
+        '<button type="button" class="seg-btn" aria-pressed="' + (method === 'swiss') + '" data-action="nw-method" data-v="swiss" data-fk="nwm-swiss"><b>Swiss</b><span>Trainers on similar points play each other, with no rematches. Used at official events.</span></button>' +
+        '<button type="button" class="seg-btn" aria-pressed="' + (method === 'random') + '" data-action="nw-method" data-v="random" data-fk="nwm-random"><b>Random</b><span>A new opponent each week, whatever their record.</span></button>' +
+      '</div></fieldset>' +
+      '<fieldset class="field"><div class="present-head"><legend>Who\'s here this week? <span class="muted">' + present.length + ' of ' + active.length + '</span></legend>' +
+        '<div class="btn-row"><button type="button" class="btn btn-quiet btn-sm" data-action="nw-all" data-fk="nw-all">Everyone</button><button type="button" class="btn btn-quiet btn-sm" data-action="nw-none" data-fk="nw-none">Nobody</button></div></div>' +
+        '<div class="present">' + active.map(function (t) {
+          return '<button type="button" class="pchip" aria-pressed="' + ui.present.has(t.id) + '" data-action="nw-toggle" data-id="' + t.id + '" data-fk="pc-' + t.id + '"><span class="box" aria-hidden="true"></span>' +
+            esc(t.name) + (t.cls ? ' <small>' + esc(t.cls) + '</small>' : '') + '</button>';
+        }).join('') + '</div></fieldset>';
+    if (ps && ps.state !== 'done') {
+      html += '<p class="warn" style="margin:0">Week ' + (n - 1) + ' still has ' + plural(ps.total - ps.done, 'match', 'matches') + ' without a result.' +
+        (method === 'swiss' ? ' Swiss pairings use the results entered so far.' : '') + '</p>';
+    }
+    html += '<div class="nw-go"><button type="button" class="btn btn-primary" data-action="make-pairings" data-fk="nw-go"' + (present.length < 2 ? ' disabled' : '') + '>Make pairings for ' + plural(present.length, 'trainer') + '</button>' +
+      '<span class="muted small">' + (present.length % 2 ? 'Odd number, so one trainer gets a bye worth ' + P.bye + ' points.' : '') + '</span></div>' +
+      '</div>';
+    return html;
+  }
+
+  function weekHTML(wk) {
+    var idx = state.weeks.indexOf(wk), n = idx + 1;
+    var st = weekStatus(wk), editing = ui.editWeek === wk.id;
+    var stand = computeStandings(state);
+    var isLast = idx === state.weeks.length - 1;
+    var hasResults = wk.matches.some(function (m) { return m.b && m.result; });
+    var cDel = ui.confirm === 'del-week:' + wk.id;
+    var P = state.settings.points;
+    var pct = st.total ? Math.round(st.done / st.total * 100) : 100;
+    var html = '<div class="week-head"><div class="week-title"><h3>Week ' + n + '</h3>' +
+      '<label class="vh" for="wd-' + wk.id + '">Date of week ' + n + '</label>' +
+      '<input type="date" id="wd-' + wk.id + '" class="input date-input" value="' + esc(wk.date || '') + '" data-change="week-date" data-id="' + wk.id + '" data-fk="wd-' + wk.id + '">' +
+      '<span class="progress"><span class="meter" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' + st.done + ' of ' + plural(st.total, 'result') + '</span></div>' +
+      '<div class="tools">';
+    if (editing) {
+      html += '<button type="button" class="btn" data-action="add-match" data-id="' + wk.id + '" data-fk="add-match">Add match</button>' +
+        (hasResults ? '' : '<button type="button" class="btn" data-action="repair" data-id="' + wk.id + '" data-fk="repair">Re-pair everyone</button>') +
+        '<button type="button" class="btn btn-primary" data-action="done-edit" data-fk="done-edit">Done</button>';
+    } else {
+      html += '<button type="button" class="btn" data-action="edit-week" data-id="' + wk.id + '" data-fk="edit-week">Edit pairings</button>' +
+        '<button type="button" class="btn" data-action="print-week" data-id="' + wk.id + '" data-fk="print-week">Print pairings</button>' +
+        (isLast ? '<button type="button" class="btn ' + (cDel ? 'is-confirm' : 'btn-danger') + '" data-action="del-week" data-id="' + wk.id + '" data-fk="del-week">' + (cDel ? 'Confirm: delete Week ' + n : 'Delete week') + '</button>' : '');
+    }
+    html += '</div></div>';
+
+    if (editing) {
+      html += '<p class="hint">Change who plays whom. Pick "Bye" for a trainer without an opponent. Changing a match clears its result.</p>';
+      html += '<ol class="slips">' + wk.matches.map(function (m) { return editSlipHTML(m, wk); }).join('') + '</ol>';
+      var count = {};
+      wk.matches.forEach(function (m) { count[m.a] = (count[m.a] || 0) + 1; if (m.b) count[m.b] = (count[m.b] || 0) + 1; });
+      var dups = Object.keys(count).filter(function (id) { return count[id] > 1; });
+      if (dups.length) html += '<p class="warn">' + dups.map(function (id) { return esc(tName(id)); }).join(', ') + (dups.length > 1 ? ' are' : ' is') + ' in more than one match this week.</p>';
+      var missing = activeTrainers().filter(function (t) { return !count[t.id]; });
+      if (missing.length) html += '<p class="info">Not playing this week: ' + missing.map(function (t) { return esc(t.name); }).join(', ') + '.</p>';
+    } else {
+      html += '<p class="hint">Tap the winner of each match, or Tie. Tap again to clear a result. Win ' + P.win + ' · Tie ' + P.tie + ' · Loss ' + P.loss + ' points.</p>';
+      html += wk.matches.length ? '<ol class="slips">' + wk.matches.map(function (m) { return slipHTML(m, stand); }).join('') + '</ol>'
+        : '<div class="empty"><b>No matches this week</b><span>Use Edit pairings to add some.</span></div>';
+      html += bonusHTML(wk);
+    }
+    return html;
+  }
+
+  function slipHTML(m, stand) {
+    var P = state.settings.points;
+    if (!m.b) {
+      return '<li class="slip bye"><span class="tno"><small>Table</small>–</span><div class="bye-line"><b>' + esc(tName(m.a)) + '</b><span class="muted">has a bye this week</span><span class="tag t-bye">+' + P.bye + ' pts</span></div></li>';
+    }
+    var s = m.result || 'open';
+    function side(id, key) {
+      var t = trainer(id) || { name: 'Unknown', cls: '' }, r = stand.byId.get(id);
+      var tag = s === 'open' ? '' : s === 'tie' ? 'Tie' : s === key ? 'Win' : 'Loss';
+      var tcls = tag === 'Win' ? 't-win' : tag === 'Loss' ? 't-loss' : tag === 'Tie' ? 't-tie' : '';
+      return '<button type="button" class="pl pl-' + key + '" data-action="result" data-m="' + m.id + '" data-r="' + key + '" data-fk="r-' + m.id + '-' + key + '" aria-pressed="' + (s === key) + '" aria-label="' + esc(t.name) + ' wins">' +
+        '<span class="pl-name">' + esc(t.name) + '</span><span class="pl-meta">' + (t.cls ? esc(t.cls) + ' · ' : '') + (r ? r.total : 0) + ' pts</span>' +
+        '<span class="tag ' + tcls + '">' + tag + '</span></button>';
+    }
+    return '<li class="slip" data-state="' + s + '"><span class="tno"><small>Table</small>' + m.table + '</span>' +
+      side(m.a, 'a') +
+      '<button type="button" class="tie-btn" data-action="result" data-m="' + m.id + '" data-r="tie" data-fk="r-' + m.id + '-tie" aria-pressed="' + (s === 'tie') + '" aria-label="Tie at table ' + m.table + '"><span class="vs">vs</span><span>Tie</span></button>' +
+      side(m.b, 'b') + '</li>';
+  }
+
+  function editSlipHTML(m, wk) {
+    var usage = {};
+    wk.matches.forEach(function (o) {
+      if (o.id === m.id) return;
+      var label = o.b ? 'table ' + o.table : 'bye';
+      usage[o.a] = label; if (o.b) usage[o.b] = label;
+    });
+    var pool = activeTrainers();
+    [m.a, m.b].forEach(function (id) { if (id && !pool.some(function (t) { return t.id === id; })) { var t = trainer(id); if (t) pool.push(t); } });
+    pool.sort(byName);
+    function opts(sel, allowBye) {
+      return (allowBye ? '<option value=""' + (sel ? '' : ' selected') + '>Bye (no opponent)</option>' : '') +
+        pool.map(function (t) {
+          return '<option value="' + t.id + '"' + (t.id === sel ? ' selected' : '') + '>' + esc(t.name) + (usage[t.id] ? ' (also ' + usage[t.id] + ')' : '') + '</option>';
+        }).join('');
+    }
+    var label = m.b ? 'table ' + m.table : 'bye';
+    return '<li class="slip editing"><span class="tno"><small>Table</small>' + (m.b ? m.table : '–') + '</span>' +
+      '<select class="input sel-a" aria-label="First trainer, ' + label + '" data-change="edit-a" data-m="' + m.id + '" data-fk="ea-' + m.id + '">' + opts(m.a, false) + '</select>' +
+      '<span class="vs-txt" aria-hidden="true">vs</span>' +
+      '<select class="input sel-b" aria-label="Second trainer, ' + label + '" data-change="edit-b" data-m="' + m.id + '" data-fk="eb-' + m.id + '">' + opts(m.b, true) + '</select>' +
+      '<button type="button" class="icon-btn x" aria-label="Remove this match" data-action="remove-match" data-m="' + m.id + '" data-fk="rm-' + m.id + '">✕</button></li>';
+  }
+
+  function bonusHTML(wk) {
+    var ids = [];
+    wk.matches.forEach(function (m) { ids.push(m.a); if (m.b) ids.push(m.b); });
+    ids = ids.filter(function (id, i) { return ids.indexOf(id) === i; }).sort(function (a, b) { return tName(a).localeCompare(tName(b)); });
+    if (!ids.length) return '';
+    var given = Object.keys(wk.bonus || {}).filter(function (k) { return wk.bonus[k]; });
+    return '<details class="bonus" id="bonus-' + wk.id + '"' + (ui.bonusOpen ? ' open' : '') + '><summary>Bonus points <span class="muted">' +
+      (given.length ? plural(given.length, 'trainer') + ' awarded this week' : 'For sportsmanship, helping a new player, and so on') + '</span></summary>' +
+      '<div class="bonus-list">' + ids.map(function (id) {
+        var n = (wk.bonus && wk.bonus[id]) || 0, nm = esc(tName(id));
+        return '<div class="brow"><span>' + nm + '</span><div class="stepper">' +
+          '<button type="button" data-action="bonus" data-w="' + wk.id + '" data-id="' + id + '" data-d="-1" data-fk="bm-' + id + '" aria-label="One less bonus point for ' + nm + '">−</button>' +
+          '<output aria-live="polite">' + (n > 0 ? '+' + n : n) + '</output>' +
+          '<button type="button" data-action="bonus" data-w="' + wk.id + '" data-id="' + id + '" data-d="1" data-fk="bp-' + id + '" aria-label="One more bonus point for ' + nm + '">+</button></div></div>';
+      }).join('') + '</div><p class="small muted">Bonus points add to a trainer\'s total but don\'t count towards tiebreakers.</p></details>';
+  }
+
+  /* ----- Standings ----- */
+  function standingsRows() {
+    var stand = computeStandings(state);
+    var rows = ui.hideDropped ? stand.rows.filter(function (r) { return r.t.active; }) : stand.rows;
+    return { stand: stand, rows: rows };
+  }
+
+  function renderStandings() {
+    var el = $('#panel-standings');
+    var data = standingsRows(), rows = data.rows;
+    var last = lastResultWeekIndex();
+    var prevRank = null;
+    if (last >= 1) {
+      var prev = computeStandings(state, { upto: last - 1 }).rows;
+      if (ui.hideDropped) prev = prev.filter(function (r) { return r.t.active; });
+      prevRank = new Map(prev.map(function (r, i) { return [r.id, i + 1]; }));
+    }
+    var anyResult = last >= 0;
+    var anyBonus = rows.some(function (r) { return r.bonus; });
+    var weeks = state.weeks;
+    var fs = !!document.fullscreenElement;
+    var canFS = !!(document.fullscreenEnabled && el.requestFullscreen);
+    var html = '<div class="panel-head"><div><h2>Standings</h2><p>' +
+      (anyResult ? 'After Week ' + (last + 1) + '. Ties on points are split by opponents\' win %.' : 'The table fills in as results are entered.') + '</p></div>' +
+      '<div class="tools">' +
+        '<label class="switch"><input type="checkbox" id="hide-dropped" data-change="hide-dropped" data-fk="hide-dropped"' + (ui.hideDropped ? ' checked' : '') + '> Hide dropped</label>' +
+        '<button type="button" class="btn" data-action="copy-standings" data-fk="copy-st">Copy table</button>' +
+        '<button type="button" class="btn" data-action="print-standings" data-fk="print-st">Print</button>' +
+        (canFS ? '<button type="button" class="btn btn-primary" data-action="present" data-fk="present">' + (fs ? 'Exit full screen' : 'Show on the board') + '</button>' : '') +
+      '</div></div>';
+
+    if (!state.trainers.length) {
+      el.innerHTML = html + '<div class="empty"><b>No trainers yet</b><span>Add your players, then make the first week\'s pairings.</span><button type="button" class="btn btn-primary" data-action="tab" data-tab="trainers">Add trainers</button></div>';
+      return;
+    }
+    html += '<div class="table-card"><div class="table-scroll"><table class="st"><thead>';
+    if (weeks.length) {
+      html += '<tr><th colspan="' + (anyBonus ? 8 : 7) + '"></th><th class="wkgroup" colspan="' + weeks.length + '">Points by week</th></tr>';
+    }
+    html += '<tr><th scope="col">#</th><th scope="col"><span class="vh">Change</span></th><th scope="col">Trainer</th>' +
+      '<th scope="col" class="num" title="Matches played, including byes">Played</th><th scope="col" class="num" title="Wins-Losses-Ties">W-L-T</th>' +
+      (anyBonus ? '<th scope="col" class="num">Bonus</th>' : '') +
+      '<th scope="col" class="num">Pts</th><th scope="col" class="num" title="Opponents\' win percentage">OWP</th>' +
+      weeks.map(function (w, i) { return '<th scope="col" class="wkcol' + (i === 0 ? ' wkfirst' : '') + '" title="' + esc(fmtDate(w.date, true)) + '">W' + (i + 1) + '</th>'; }).join('') +
+      '</tr></thead><tbody>';
+    rows.forEach(function (r, i) {
+      var rank = i + 1, t = r.t;
+      var medal = anyResult && rank <= 3 && r.total > 0 ? ' r' + rank : '';
+      var mv = '';
+      if (prevRank && prevRank.has(r.id)) {
+        var d = prevRank.get(r.id) - rank;
+        mv = d > 0 ? '<span class="move up" aria-label="Up ' + d + '">▲' + d + '</span>' : d < 0 ? '<span class="move down" aria-label="Down ' + (-d) + '">▼' + (-d) + '</span>' : '<span class="move same" aria-label="No change">–</span>';
+      }
+      html += '<tr class="' + (t.active ? '' : 'is-dropped') + '">' +
+        '<td><span class="rank' + medal + '">' + rank + '</span></td><td class="move">' + mv + '</td>' +
+        '<td><button type="button" class="trainer-link" data-action="open-trainer" data-id="' + r.id + '" data-fk="st-' + r.id + '">' + esc(t.name) + '</button>' +
+          '<span class="sub">' + [t.cls, t.deck].filter(Boolean).map(esc).join(' · ') + (t.active ? '' : (t.cls || t.deck ? ' · ' : '') + 'Dropped') + '</span></td>' +
+        '<td class="num">' + (r.played + r.byes) + '</td>' +
+        '<td class="num">' + (r.w + r.byes) + '-' + r.l + '-' + r.d + '</td>' +
+        (anyBonus ? '<td class="num">' + (r.bonus ? (r.bonus > 0 ? '+' : '') + r.bonus : '–') + '</td>' : '') +
+        '<td class="num"><span class="pts">' + r.total + '</span></td>' +
+        '<td class="num">' + (r.played ? Math.round(r.owp * 100) + '%' : '–') + '</td>' +
+        weeks.map(function (w, wi) { return '<td class="wkcol' + (wi === 0 ? ' wkfirst' : '') + '">' + weekCell(r.weekly[w.id], wi + 1, t.name) + '</td>'; }).join('') +
+        '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+    html += '<div class="key"><span><i class="wk wk-win">3</i>Win</span><span><i class="wk wk-tie">1</i>Tie</span><span><i class="wk wk-loss">0</i>Loss</span>' +
+      '<span><i class="wk wk-bye">3</i>Bye</span><span><i class="wk wk-pending">…</i>Result to come</span><span><i class="wk wk-absent">–</i>Not playing</span>' +
+      '<span>Small numbers are bonus points. OWP is the average win rate of a trainer\'s opponents.</span></div>';
+    el.innerHTML = html;
+  }
+
+  function weekCell(c, n, name) {
+    if (!c) return '<span class="wk wk-absent" title="' + esc(name) + ' didn\'t play in week ' + n + '">–</span>';
+    var label = { win: 'Win', loss: 'Loss', tie: 'Tie', bye: 'Bye', pending: 'Result to come' }[c.kind];
+    var sup = c.bonus ? '<sup>' + (c.bonus > 0 ? '+' : '') + c.bonus + '</sup>' : '';
+    var title = 'Week ' + n + ': ' + label + (c.kind !== 'pending' ? ' (' + c.pts + ')' : '') + (c.bonus ? ', bonus ' + c.bonus : '');
+    if (c.kind === 'pending') return '<span class="wk wk-pending" title="' + esc(title) + '">…' + sup + '</span>';
+    return '<span class="wk wk-' + c.kind + '" title="' + esc(title) + '">' + c.pts + sup + '</span>';
+  }
+
+  /* ----- Setup ----- */
+  function renderSetup() {
+    var s = state.settings, P = s.points;
+    var c = function (k) { return ui.confirm === k; };
+    var games = ['Pokémon TCG', 'Pokémon TCG Pocket', 'Pokémon video game', 'Pokémon GO', 'Other'];
+    function sel(list, v) { return list.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); }
+    $('#panel-setup').innerHTML =
+      '<div class="panel-head"><div><h2>Setup</h2><p>Tournament details, scoring and backups.</p></div></div>' +
+      '<div class="setup-grid">' +
+      '<section class="card"><h3>Tournament</h3>' +
+        '<div class="field"><label for="set-name">Tournament name</label><input id="set-name" class="input" maxlength="60" value="' + esc(s.name) + '" data-input="set-name" data-fk="set-name"></div>' +
+        '<div class="field-row">' +
+          '<div class="field"><label for="set-game">Game</label><select id="set-game" class="input" data-change="set-game" data-fk="set-game">' + sel(games.indexOf(s.game) < 0 ? games.concat([s.game]) : games, s.game) + '</select></div>' +
+          '<div class="field"><label for="set-format">Match format</label><select id="set-format" class="input" data-change="set-format" data-fk="set-format">' + sel(['Best of 1', 'Best of 3'], s.format) + '</select></div>' +
+        '</div>' +
+        '<div class="field-row">' +
+          '<div class="field"><label for="set-pairing">Usual pairing</label><select id="set-pairing" class="input" data-change="set-pairing" data-fk="set-pairing"><option value="swiss"' + (s.pairing === 'swiss' ? ' selected' : '') + '>Swiss</option><option value="random"' + (s.pairing === 'random' ? ' selected' : '') + '>Random</option></select></div>' +
+          '<div class="field"><label for="set-weeks">Weeks in the season</label><input id="set-weeks" class="input" type="number" min="1" max="40" inputmode="numeric" value="' + esc(s.weeksPlanned) + '" data-change="set-weeks" data-fk="set-weeks"></div>' +
+        '</div>' +
+      '</section>' +
+      '<section class="card"><h3>Points</h3>' +
+        '<div class="points-grid">' + ['win', 'tie', 'loss', 'bye'].map(function (k) {
+          return '<div class="field"><label for="pt-' + k + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</label><input id="pt-' + k + '" class="input" type="number" min="0" max="20" inputmode="numeric" value="' + P[k] + '" data-change="set-points" data-k="' + k + '" data-fk="pt-' + k + '"></div>';
+        }).join('') + '</div>' +
+        '<h4>How the table is ordered</h4>' +
+        '<ol class="rules"><li>Total points: match points plus any bonus points.</li>' +
+        '<li>Opponents\' win % (OWP): the average win rate of everyone a trainer has played. Each opponent counts as at least 25%.</li>' +
+        '<li>Opponents\' opponents\' win %: the same idea one step further out.</li><li>Number of wins, then name.</li></ol>' +
+        '<p class="small muted">A bye counts as a win in a trainer\'s record but isn\'t included in anyone\'s win %.</p>' +
+      '</section>' +
+      '<section class="card"><h3>Saving and backups</h3>' +
+        '<p class="small">Everything saves automatically in this browser on this computer. To run the league from another computer, download a backup here and restore it there. Clearing your browser history can remove saved data, so download a backup now and then.</p>' +
+        '<div class="btn-row"><button type="button" class="btn" data-action="export" data-fk="export">Download backup</button>' +
+        '<label class="btn" for="import-file">Restore a backup</label><input type="file" id="import-file" class="vh" accept=".json,application/json" data-change="import"></div>' +
+        '<hr><h4>Start again</h4>' +
+        '<div class="btn-row">' +
+          '<button type="button" class="btn ' + (c('reset-results') ? 'is-confirm' : '') + '" data-action="reset-results" data-fk="reset-results">' + (c('reset-results') ? 'Confirm: delete all weeks' : 'New season, same trainers') + '</button>' +
+          '<button type="button" class="btn ' + (c('reset-all') ? 'is-confirm' : 'btn-danger') + '" data-action="reset-all" data-fk="reset-all">' + (c('reset-all') ? 'Confirm: clear everything' : 'Clear everything') + '</button>' +
+        '</div>' +
+        '<button type="button" class="btn btn-quiet" style="justify-self:start" data-action="load-example" data-fk="load-example">' + (c('load-example') ? 'Confirm: replace with the example league' : 'Load the example league') + '</button>' +
+      '</section></div>';
+  }
+
+  function renderSaveState() {
+    var el = $('#save-state'), txt = $('#save-text');
+    el.classList.toggle('is-off', !storageOK);
+    if (!storageOK) txt.textContent = 'This browser isn\'t saving changes. Download a backup from Setup before closing.';
+    else if (lastSaved) txt.textContent = 'Saved in this browser at ' + lastSaved.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    else txt.textContent = state.example ? 'Example league. Your changes save automatically in this browser.' : 'Saves automatically in this browser';
+  }
+
+  /* ----- trainer card dialog ----- */
+  function openTrainer(id) {
+    var stand = computeStandings(state), r = stand.byId.get(id);
+    if (!r) return;
+    var P = state.settings.points;
+    var rank = stand.rows.indexOf(r) + 1;
+    var hist = state.weeks.map(function (w, i) {
+      var m = w.matches.filter(function (x) { return x.a === id || x.b === id; })[0];
+      var b = w.bonus && w.bonus[id] ? ' <span class="muted small">bonus ' + (w.bonus[id] > 0 ? '+' : '') + w.bonus[id] + '</span>' : '';
+      if (!m) return '<li><span class="h-wk">W' + (i + 1) + '</span><span class="muted">Not playing</span><span></span></li>';
+      if (!m.b) return '<li><span class="h-wk">W' + (i + 1) + '</span><span>Bye' + b + '</span><span class="wk wk-bye">' + P.bye + '</span></li>';
+      var opp = m.a === id ? m.b : m.a, mine = m.a === id ? 'a' : 'b';
+      var res = !m.result ? 'pending' : m.result === 'tie' ? 'tie' : m.result === mine ? 'win' : 'loss';
+      var verb = { win: 'Beat', loss: 'Lost to', tie: 'Tied with', pending: 'Playing' }[res];
+      var pts = { win: P.win, loss: P.loss, tie: P.tie, pending: '…' }[res];
+      return '<li><span class="h-wk">W' + (i + 1) + '</span><span>' + verb + ' <b>' + esc(tName(opp)) + '</b> <span class="muted small">table ' + m.table + '</span>' + b + '</span><span class="wk wk-' + res + '">' + pts + '</span></li>';
+    }).join('');
+    var t = r.t;
+    var dlg = $('#trainer-dialog');
+    dlg.innerHTML = '<div class="tc-foil"><span class="eyebrow">Trainer card</span><button type="button" class="icon-btn" data-action="close-dialog" aria-label="Close">✕</button></div>' +
+      '<div class="tc-body"><div><h2>' + esc(t.name) + '</h2><span class="sub">' + ([t.cls, t.deck ? t.deck + ' deck' : ''].filter(Boolean).map(esc).join(' · ') || 'No class or deck added') + (t.active ? '' : ' · Dropped') + '</span></div>' +
+      '<dl class="tc-figs"><div><dt>Rank</dt><dd>' + rank + '</dd></div><div><dt>Points</dt><dd>' + r.total + '</dd></div><div><dt>W-L-T</dt><dd>' + (r.w + r.byes) + '-' + r.l + '-' + r.d + '</dd></div><div><dt>OWP</dt><dd>' + (r.played ? Math.round(r.owp * 100) + '%' : '–') + '</dd></div></dl>' +
+      '<h3>Week by week</h3>' + (state.weeks.length ? '<ol class="hist">' + hist + '</ol>' : '<p class="muted">No weeks played yet.</p>') + '</div>';
+    if (dlg.showModal) { try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); } }
+    else dlg.setAttribute('open', '');
+  }
+  function closeDialog() {
+    var dlg = $('#trainer-dialog');
+    if (dlg.close) { try { dlg.close(); } catch (e) { dlg.removeAttribute('open'); } } else dlg.removeAttribute('open');
+  }
+
+  /* ----- print, copy, export ----- */
+  function doPrint() { try { window.print(); } catch (e) { toast('Printing isn\'t available here. Open the downloaded file in your browser to print.'); } }
+  function printWeek(wk) {
+    var n = state.weeks.indexOf(wk) + 1, P = state.settings.points;
+    var byes = wk.matches.filter(function (m) { return !m.b; });
+    $('#print-sheet').innerHTML = '<h1>' + esc(state.settings.name) + '</h1><h2>Week ' + n + ' pairings' + (wk.date ? ' · ' + esc(fmtDate(wk.date, true)) : '') + '</h2>' +
+      '<table><thead><tr><th>Table</th><th>Trainer</th><th></th><th>Trainer</th><th>Winner (or TIE)</th></tr></thead><tbody>' +
+      wk.matches.filter(function (m) { return m.b; }).map(function (m) {
+        return '<tr><td class="t">' + m.table + '</td><td>' + esc(tName(m.a)) + '</td><td class="vs">vs</td><td>' + esc(tName(m.b)) + '</td><td class="box"></td></tr>';
+      }).join('') + '</tbody></table>' +
+      (byes.length ? '<p><b>Bye:</b> ' + byes.map(function (m) { return esc(tName(m.a)); }).join(', ') + ' (' + P.bye + ' points)</p>' : '') +
+      '<p>' + esc(state.settings.format) + '. Win ' + P.win + ', tie ' + P.tie + ', loss ' + P.loss + ' points.</p>';
+    doPrint();
+  }
+  function printStandings() {
+    var rows = standingsRows().rows, last = lastResultWeekIndex();
+    $('#print-sheet').innerHTML = '<h1>' + esc(state.settings.name) + '</h1><h2>Standings' + (last >= 0 ? ' after Week ' + (last + 1) : '') + '</h2>' +
+      '<table><thead><tr><th>#</th><th>Trainer</th><th>Class</th><th>W-L-T</th><th>Points</th><th>OWP</th></tr></thead><tbody>' +
+      rows.map(function (r, i) {
+        return '<tr><td class="t">' + (i + 1) + '</td><td>' + esc(r.t.name) + '</td><td>' + esc(r.t.cls) + '</td><td class="r">' + (r.w + r.byes) + '-' + r.l + '-' + r.d + '</td><td class="r"><b>' + r.total + '</b></td><td class="r">' + (r.played ? Math.round(r.owp * 100) + '%' : '–') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    doPrint();
+  }
+  function standingsText() {
+    var rows = standingsRows().rows, last = lastResultWeekIndex();
+    var lines = [state.settings.name + ': standings' + (last >= 0 ? ' after Week ' + (last + 1) : '')];
+    rows.forEach(function (r, i) {
+      lines.push((i + 1) + '. ' + r.t.name + (r.t.cls ? ' (' + r.t.cls + ')' : '') + ': ' + r.total + ' pts, ' + (r.w + r.byes) + '-' + r.l + '-' + r.d);
+    });
+    return lines.join('\n');
+  }
+  function copyText(text) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      toast(ok ? 'Standings copied. Paste them into an email or message.' : 'Couldn\'t copy here. Try Print instead.');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Standings copied. Paste them into an email or message.'); }, fallback);
+    } else fallback();
+  }
+  function exportBackup() {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var slug = (state.settings.name || 'league').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'league';
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = slug + '-backup-' + todayISO() + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    toast('Backup downloaded.');
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var el = $('#toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
+  }
+
+  /* ---------------- actions ---------------- */
+  var actions = {
+    'tab': function (el) { showTab(el.getAttribute('data-tab')); },
+    'cancel-confirm': function () { ui.confirm = null; render(); },
+    'start-own': function () {
+      if (!askConfirm('start-own')) return;
+      state = emptyState(); ui.week = null; ui.present = null; ui.editWeek = null;
+      commit(); showTab('trainers'); toast('Ready. Add your first trainers.');
+      setTimeout(function () { var n = $('#add-name'); if (n) n.focus(); }, 0);
+    },
+    'pick-week': function (el) { ui.week = el.getAttribute('data-id'); ui.editWeek = null; render(); },
+    'nw-method': function (el) { ui.newMethod = el.getAttribute('data-v'); render(); },
+    'nw-toggle': function (el) {
+      var id = el.getAttribute('data-id');
+      if (ui.present.has(id)) ui.present.delete(id); else ui.present.add(id);
+      render();
+    },
+    'nw-all': function () { ui.present = new Set(activeTrainers().map(function (t) { return t.id; })); render(); },
+    'nw-none': function () { ui.present = new Set(); render(); },
+    'make-pairings': function () {
+      var ids = activeTrainers().filter(function (t) { return ui.present.has(t.id); }).map(function (t) { return t.id; });
+      if (ids.length < 2) return;
+      var method = ui.newMethod || state.settings.pairing;
+      var res = makePairings(state, ids, method);
+      var wk = { id: uid(), date: ui.newDate || todayISO(), matches: res.matches, bonus: {} };
+      state.weeks.push(wk);
+      ui.week = wk.id; ui.present = null; ui.newDate = null; ui.newMethod = null;
+      commit(); render();
+      toast('Week ' + state.weeks.length + ' pairings are ready.' + (res.rematch ? ' Some trainers had to meet a previous opponent.' : ''));
+    },
+    'result': function (el) {
+      var f = findMatch(el.getAttribute('data-m'));
+      if (!f || !f.match.b) return;
+      var r = el.getAttribute('data-r');
+      f.match.result = f.match.result === r ? null : r;
+      commit(); render();
+    },
+    'edit-week': function (el) { ui.editWeek = el.getAttribute('data-id'); render(); },
+    'done-edit': function () { ui.editWeek = null; render(); },
+    'add-match': function (el) {
+      var wk = weekById(el.getAttribute('data-id'));
+      if (!wk) return;
+      var used = new Set();
+      wk.matches.forEach(function (m) { used.add(m.a); if (m.b) used.add(m.b); });
+      var free = activeTrainers().filter(function (t) { return !used.has(t.id); });
+      var act = activeTrainers();
+      if (!act.length) return;
+      var a = (free[0] || act[0]).id, b = free[1] ? free[1].id : null;
+      wk.matches.push({ id: uid(), table: null, a: a, b: b, result: b ? null : 'bye' });
+      renumber(wk); commit(); render();
+    },
+    'remove-match': function (el) {
+      var f = findMatch(el.getAttribute('data-m'));
+      if (!f) return;
+      f.week.matches = f.week.matches.filter(function (m) { return m !== f.match; });
+      renumber(f.week); commit(); render();
+    },
+    'repair': function (el) {
+      var wk = weekById(el.getAttribute('data-id'));
+      if (!wk) return;
+      var ids = [];
+      wk.matches.forEach(function (m) { ids.push(m.a); if (m.b) ids.push(m.b); });
+      ids = ids.filter(function (id, i) { return ids.indexOf(id) === i; });
+      var res = makePairings(state, ids, state.settings.pairing, Math.random, wk.id);
+      wk.matches = res.matches;
+      commit(); render(); toast('New pairings made.' + (res.rematch ? ' Some trainers had to meet a previous opponent.' : ''));
+    },
+    'del-week': function (el) {
+      var id = el.getAttribute('data-id');
+      if (!askConfirm('del-week:' + id)) return;
+      state.weeks = state.weeks.filter(function (w) { return w.id !== id; });
+      ui.week = null; ui.editWeek = null;
+      commit(); render(); toast('Week deleted.');
+    },
+    'print-week': function (el) { var wk = weekById(el.getAttribute('data-id')); if (wk) printWeek(wk); },
+    'bonus': function (el) {
+      var wk = weekById(el.getAttribute('data-w')), id = el.getAttribute('data-id');
+      if (!wk) return;
+      wk.bonus = wk.bonus || {};
+      var n = Math.max(-9, Math.min(9, (wk.bonus[id] || 0) + Number(el.getAttribute('data-d'))));
+      if (n) wk.bonus[id] = n; else delete wk.bonus[id];
+      ui.bonusOpen = true; saveUI();
+      commit(); render();
+    },
+    't-status': function (el) {
+      var t = trainer(el.getAttribute('data-id'));
+      if (!t) return;
+      t.active = !t.active; ui.present = null;
+      commit(); render();
+      toast(t.active ? t.name + ' is back in the pairings.' : t.name + ' is dropped. Their results stay in the table.');
+    },
+    't-del': function (el) {
+      var id = el.getAttribute('data-id');
+      if (inAnyMatch().has(id)) return;
+      if (!askConfirm('del:' + id)) return;
+      var t = trainer(id);
+      state.trainers = state.trainers.filter(function (x) { return x.id !== id; });
+      ui.present = null;
+      commit(); render(); if (t) toast(t.name + ' deleted.');
+    },
+    'bulk-add': function () {
+      var ta = $('#bulk-text'), added = 0, skipped = 0;
+      String(ta.value || '').split(/\r?\n/).forEach(function (line) {
+        var parts = line.split(/\t|,/).map(function (p) { return p.trim(); });
+        if (!parts[0]) return;
+        var r = addTrainer(parts[0], parts[1], parts[2]);
+        if (r.ok) added++; else skipped++;
+      });
+      var msg = $('#add-msg');
+      if (!added && !skipped) { msg.textContent = 'Paste at least one name, one per line.'; msg.className = 'form-msg is-error'; return; }
+      msg.textContent = 'Added ' + plural(added, 'trainer') + '.' + (skipped ? ' Skipped ' + skipped + ' already on the list.' : '');
+      msg.className = 'form-msg ' + (added ? 'is-ok' : 'is-error');
+      if (added) { ta.value = ''; commit(); render(); }
+    },
+    'open-trainer': function (el) { openTrainer(el.getAttribute('data-id')); },
+    'close-dialog': function () { closeDialog(); },
+    'copy-standings': function () { copyText(standingsText()); },
+    'print-standings': function () { printStandings(); },
+    'present': function () {
+      var p = $('#panel-standings');
+      if (document.fullscreenElement) { document.exitFullscreen().catch(function () {}); return; }
+      var req = p.requestFullscreen && p.requestFullscreen();
+      if (req && req.catch) req.catch(function () { toast('Full screen isn\'t available here.'); });
+    },
+    'export': function () { exportBackup(); },
+    'reset-results': function () {
+      if (!askConfirm('reset-results')) return;
+      state.weeks = []; state.example = false; ui.week = null; ui.editWeek = null;
+      state.trainers.forEach(function (t) { t.active = true; });
+      commit(); render(); toast('All weeks cleared. Trainers kept.');
+    },
+    'reset-all': function () {
+      if (!askConfirm('reset-all')) return;
+      state = emptyState(); ui.week = null; ui.editWeek = null; ui.present = null;
+      commit(); render(); toast('Everything cleared.');
+    },
+    'load-example': function () {
+      if (!state.example && (state.trainers.length || state.weeks.length) && !askConfirm('load-example')) return;
+      ui.confirm = null;
+      state = exampleState(); ui.week = null; ui.editWeek = null; ui.present = null;
+      commit(); render(); toast('Example league loaded.');
+    }
+  };
+
+  var changes = {
+    'nw-date': function (el) { ui.newDate = el.value; },
+    'week-date': function (el) {
+      var wk = weekById(el.getAttribute('data-id'));
+      if (wk) { wk.date = el.value; commit(); render(); }
+    },
+    'edit-a': function (el) {
+      var f = findMatch(el.getAttribute('data-m'));
+      if (!f || f.match.a === el.value) return;
+      f.match.a = el.value; f.match.result = f.match.b ? null : 'bye';
+      renumber(f.week); commit(); render();
+    },
+    'edit-b': function (el) {
+      var f = findMatch(el.getAttribute('data-m'));
+      var v = el.value || null;
+      if (!f || f.match.b === v) return;
+      f.match.b = v; f.match.result = v ? null : 'bye';
+      renumber(f.week); commit(); render();
+    },
+    't-name': function (el) {
+      var t = trainer(el.getAttribute('data-id'));
+      if (!t) return;
+      var v = el.value.trim().replace(/\s+/g, ' ');
+      if (!v) { el.value = t.name; toast('A trainer needs a name.'); return; }
+      t.name = v; commit(); renderHeader();
+    },
+    't-cls': function (el) { var t = trainer(el.getAttribute('data-id')); if (t) { t.cls = el.value.trim(); commit(); } },
+    't-deck': function (el) { var t = trainer(el.getAttribute('data-id')); if (t) { t.deck = el.value.trim(); commit(); } },
+    'hide-dropped': function (el) { ui.hideDropped = el.checked; saveUI(); render(); },
+    'set-game': function (el) { state.settings.game = el.value; commit(); renderHeader(); },
+    'set-format': function (el) { state.settings.format = el.value; commit(); renderHeader(); },
+    'set-pairing': function (el) { state.settings.pairing = el.value; ui.newMethod = null; commit(); renderHeader(); },
+    'set-weeks': function (el) {
+      var n = Math.max(1, Math.min(40, parseInt(el.value, 10) || 1));
+      el.value = n; state.settings.weeksPlanned = n; commit(); renderHeader();
+    },
+    'set-points': function (el) {
+      var k = el.getAttribute('data-k');
+      var n = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+      el.value = n; state.settings.points[k] = n; commit(); renderHeader();
+    },
+    'import': function (el) {
+      var file = el.files && el.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = JSON.parse(String(reader.result));
+          if (!data || !Array.isArray(data.trainers) || !Array.isArray(data.weeks)) throw new Error('shape');
+          state = normalize(data); ui.week = null; ui.editWeek = null; ui.present = null;
+          commit(); render(); toast('Backup restored: ' + plural(state.trainers.length, 'trainer') + ', ' + plural(state.weeks.length, 'week') + '.');
+        } catch (e) {
+          toast('That file isn\'t a league backup. Choose a .json file downloaded from this page.');
+        }
+        el.value = '';
+      };
+      reader.onerror = function () { toast('Couldn\'t read that file. Try choosing it again.'); el.value = ''; };
+      reader.readAsText(file);
+    }
+  };
+
+  var inputs = {
+    'set-name': function (el) { state.settings.name = el.value.slice(0, 60); commit(); renderHeader(); }
+  };
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-action]');
+    if (!el || el.disabled) return;
+    var fn = actions[el.getAttribute('data-action')];
+    if (fn) { e.preventDefault(); fn(el, e); }
+  });
+  document.addEventListener('change', function (e) {
+    var el = e.target.closest('[data-change]');
+    if (el && changes[el.getAttribute('data-change')]) changes[el.getAttribute('data-change')](el, e);
+  });
+  document.addEventListener('input', function (e) {
+    var el = e.target.closest('[data-input]');
+    if (el && inputs[el.getAttribute('data-input')]) inputs[el.getAttribute('data-input')](el, e);
+  });
+  document.addEventListener('toggle', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('bonus')) { ui.bonusOpen = e.target.open; saveUI(); }
+  }, true);
+
+  $('#add-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('#add-name'), cls = $('#add-cls'), deck = $('#add-deck'), msg = $('#add-msg');
+    var r = addTrainer(name.value, cls.value, deck.value);
+    msg.textContent = r.msg;
+    msg.className = 'form-msg ' + (r.ok ? 'is-ok' : 'is-error');
+    if (r.ok) { name.value = ''; deck.value = ''; commit(); render(); }
+    name.focus();
+  });
+
+  $('#trainer-dialog').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeDialog(); });
+
+  $('#tabs').addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+    var i = TABS.indexOf(ui.tab);
+    i = e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length;
+    e.preventDefault();
+    showTab(TABS[i]);
+    $('#tab-' + TABS[i]).focus();
+  });
+
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.slice(1);
+    if (TABS.indexOf(h) >= 0 && h !== ui.tab) showTab(h);
+  });
+  document.addEventListener('fullscreenchange', function () { if (ui.tab === 'standings') render(); });
+
+  /* ---------------- start ---------------- */
+  var h = location.hash.slice(1);
+  ui.tab = TABS.indexOf(h) >= 0 ? h : (TABS.indexOf(savedUI.tab) >= 0 ? savedUI.tab : (state.trainers.length ? 'fixtures' : 'trainers'));
+  render();
+  renderSaveState();
+})();
+</script>
+</body>
+</html>
